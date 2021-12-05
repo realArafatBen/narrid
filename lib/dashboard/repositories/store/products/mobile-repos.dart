@@ -1,0 +1,39 @@
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import 'package:narrid/dashboard/models/store/products/products-model.dart';
+import 'package:narrid/dashboard/repositories/map/location_repos.dart';
+
+class MobileRepos {
+  Future<List<ProductsModel>> getProducts() async {
+    /** 
+     * get the product from the server 
+     */
+    List<ProductsModel> categories = await getProduct();
+
+    //return product list
+    return categories;
+  }
+
+  Future<List<ProductsModel>> getProduct() async {
+    LocationRespos locationRespos = new LocationRespos();
+    String city = await locationRespos.getLocationForProduct();
+    var url = Uri.parse('https://narrid.com/mobile/products/mobiles.php');
+    var response = await http.post(url, body: {
+      'city': '$city',
+    });
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final returnList = data
+          .map<ProductsModel>((json) => ProductsModel.fromJson(json))
+          .toList();
+      // List<BannersModel> returnList = BannersModel.fromJson(data).image;
+      return returnList;
+    } else {
+      List<dynamic> error = jsonDecode(response.reasonPhrase);
+
+      return error;
+    }
+  }
+}
